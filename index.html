@@ -1,0 +1,59 @@
+<html style="-webkit-font-smoothing: antialiased;">
+	<head>
+		<title>Narcotics Journal</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="assets/lib/jquerymobile/jquery.mobile-1.4.5.min.css">
+		<link rel="stylesheet" href="assets/common.css">
+		<script src="assets/lib/jquery/jquery-1.12.4.min.js"></script>
+		<script src="assets/lib/jquerymobile/jquery.mobile-1.4.5.min.js"></script>
+		<script src="assets/lib/jquery-cookie/jquery.cookie.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyDTEcFm_rLO7gNFINu1yBGeHh7pqdVjvOM"></script>
+	</head>
+	<body>
+		<div id="wrapper" data-role="page">
+			<div id="panel-header" data-role="panel" class="navmenu" data-position="right" data-display="overlay"></div>
+		</div>
+
+		<script>
+			$.mobile.changePage.defaults.changeHash = false;
+
+			$(document).on("pagechange", function (e, locater) {
+				if (locater.absUrl) {
+					var page = locater.absUrl.replace(window.location.href.split('#')[0], '').replace('.html', '');
+					if (page !== 'home') {
+						window.location.hash = page;
+					} else {
+						history.pushState('', document.title, window.location.pathname);
+					}
+				} else if (window.location.hash) {
+					$.mobile.changePage(window.location.hash.substring(1) + '.html', {transition: 'none'});
+				} else {
+					$.mobile.changePage('home.html', {transition: 'none'});
+				}
+			});
+
+			$('#panel-header').load('nav.html', function () {
+				$('body').on('click', '.btn-navmenu', function () {
+					$('#panel-header').panel("open");
+				});
+			});
+			
+			$(document).on('click', '.btn-favorite', function() {
+				$.ajax({
+					method: "post",
+					url: "api/my/favorite.php?create",
+					data: {
+						type: $(this).data('type'), 
+						source_id: $(this).data('id')
+					}, 
+					dataType: 'JSON', 
+					context: this
+				}).done(function( result ) {
+					if(result.status) {
+						$(this).remove();
+					}
+				});
+			});
+		</script>
+	</body>
+</html>

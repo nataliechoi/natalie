@@ -1,0 +1,59 @@
+<div id="activity-list" data-role="page">
+
+	<style scoped>
+		#activity-list-container {
+			margin-top: 0;
+		}
+		
+		#activity-list-container a {
+			padding-right: 110px;
+		}
+	</style>
+
+	<div data-role="header" data-position="fixed" data-tap-toggle="false">
+		<h1>Narcotics Journal</h1>
+		<a href="#" class="btn-navmenu ui-btn ui-btn-icon-notext ui-corner-all ui-icon-bars ui-nodisc-icon ui-alt-icon ui-btn-right">Menu</a>
+		<a href="home.html" data-transition="slide" data-direction="reverse" class="btn-back ui-btn ui-btn-icon-notext ui-corner-all ui-icon-carat-l ui-nodisc-icon ui-alt-icon ui-btn-left">Back</a>
+	</div>
+
+	<div role="main" class="ui-content">
+		<h2 class="title">Anti-drug Activities</h2>
+		<ul id="activity-list-container" data-role="listview"></ul>
+	</div>
+
+	<script>
+		$.ajax({
+			method: "GET",
+			url: "api/activity-list.php",
+			dataType: 'JSON',
+			context: this
+		}).done(function (result) {
+			if(result.status) {
+				var activities = result.data, 
+					$activityContainer = $('#activity-list-container');
+				for (var i in activities) {
+					$activityContainer.append(
+						$('<li />').append(
+							$('<a />')
+								.attr({
+									'href': 'activity-info.html', 
+									'data-ajax': 'true', 
+									'data-transition': 'slide', 
+									'data-id': activities[i].id
+								})
+								.append(
+									$('<h2 />').text(activities[i].name), 
+									$('<p class="ui-li-aside" />').text(activities[i].time)
+								)
+								.click(function() {
+									$.cookie('activity-info-id', $(this).data('id'));
+									$.cookie('from', 'activity-list');
+								})
+						)
+					);
+				}
+				$activityContainer.listview('refresh');
+			}
+		});
+	</script>
+</div>

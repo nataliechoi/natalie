@@ -1,0 +1,169 @@
+<style>
+	#page-list {
+		margin-top: 20px;
+	}
+
+	#page-list .ui-collapsible {
+		padding: 0;
+	}
+
+	#page-list .ui-collapsible > h3 {
+		margin: 0;
+	}
+	
+	#panel-header {
+		height: 100%;
+		overflow: auto;
+	}
+
+	.avatar-container {
+		text-align: center;
+		margin-top: 20px;
+	}
+	
+	#name {
+		margin-bottom: 10px;
+	}
+
+	.avatar-container > img {
+		width: 140px;
+		height: 140px;
+		border-radius: 70px;
+		-webkit-border-radius: 70px;
+		-moz-border-radius: 70px;
+		box-shadow: 0 0 8px rgba(0, 0, 0, .8);
+		-webkit-box-shadow: 0 0 8px rgba(0, 0, 0, .8);
+		-moz-box-shadow: 0 0 8px rgba(0, 0, 0, .8);
+		margin-bottom: 10px;
+	}
+
+	.guest-container {
+		display: none;
+	}
+
+	.user-container {
+		display: none;
+	}
+</style>
+
+<div class="avatar-container">
+	<img alt="user" src="assets/image/user.png" />
+	<div id="name"></div>
+	<div class="guest-container">
+		<a href="login.html" class="ui-btn ui-btn-inline ui-icon-user ui-btn-icon-left ui-mini ui-corner-all">
+			Login
+		</a>
+	</div>
+	<div class="user-container">
+		<a href="favorite.html" class="ui-btn ui-btn-inline ui-icon-star ui-btn-icon-left ui-mini ui-btn-b ui-corner-all">
+			My Favorite
+		</a>
+		<a id="btn-logout" href="" class="ui-btn ui-btn-inline ui-icon-power ui-btn-icon-left ui-mini ui-corner-all">
+			Logout
+		</a>
+	</div>
+</div>
+<ul id="page-list" class="ui-alt-icon ui-nodisc-icon">
+	<li data-icon="home"><a href="home.html">Home</a></li>
+	<li><a href="drug-list.html">Drug Information</a></li>
+	<li><a href="tnr-list.html">Treatment & Rehabilitation</a></li>
+	<li><a href="seekhelp-list.html">Seek Help</a></li>
+	<li><a href="activity-list.html">Anti-drug Activities</a></li>
+	<li><a href="video-list.html">Anti-drug Videos</a></li>
+	<li><a href="contact-us.html">Contact Us</a></li>
+	<li><a href="api-list.html" style="background-color:darkred;color:white;">API</a></li>
+</ul>
+
+<script src="assets/lib/hellojs/hello.all.min.js"></script>
+<script>
+	$('#page-list').listview();
+	
+	$('.avatar-container a').click(function(e) {
+		$('#panel-header').panel("close");
+		if(window.location.hash) {
+			var hash = window.location.hash.substring(1);
+			if($(this).attr('href').indexOf(hash) !== -1) {
+				e.preventDefault();
+				return false;
+			}
+		}
+	});
+	
+	$('#page-list a').click(function(e) {
+		$('#panel-header').panel("close");
+		if(window.location.hash) {
+			var hash = window.location.hash.substring(1);
+			if($(this).attr('href').indexOf(hash) !== -1) {
+				e.preventDefault();
+				return false;
+			}
+		}
+	});
+	
+	$('#btn-logout').click(function() {
+		$.ajax({
+			method: "get",
+			url: "api/auth/logout.php",
+			dataType: 'JSON'
+		}).done(function( result ) {
+			if(result) {
+				hello('google').logout();
+				hello('facebook').logout();
+				window.location.hash = 'login';
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	
+	
+	function checkLogin() {
+		$.ajax({
+			method: "get",
+			url: "api/auth/check.php",
+			dataType: 'JSON'
+		}).done(function( result ) {
+			if(!result.status) {
+				$('.guest-container').show();
+				$('.btn-personal').hide();
+			} else {
+				$('.user-container').show();
+				$('.btn-personal').show();
+				$('#name').text(result.data.first_name + ' ' + result.data.last_name);
+				if(result.data.hasOwnProperty('avatar')) {
+					$('.avatar-container img').attr('src', result.data.avatar);
+				}
+			}
+		});
+	}
+	
+	hello.init({
+		facebook: '110649035795144',
+		google: '394534813665-efs49bnnd7vrns8ekifsafls3tminabo.apps.googleusercontent.com'
+	}, {redirect_uri: 'oauth.html'});
+		
+	var currentTime = new Date().getTime() / 1000;
+	var googleAuth = hello('google').getAuthResponse();
+	var facebookAuth = hello('facebook').getAuthResponse();
+		
+	if(
+		googleAuth && currentTime < googleAuth.expires || 
+		facebookAuth && currentTime < facebookAuth.expires
+	) {
+		var auth = googleAuth ? 'google' : 'facebook';
+		hello(auth).api('/me').then(function (user) {
+			$.ajax({
+				method: "post",
+				url: "api/auth/third-party.php",
+				data: { auth: auth, data: user }, 
+				dataType: 'JSON' 
+			}).done(function() {
+				checkLogin();
+			});
+		});
+	} else {
+		hello('google').logout();
+		hello('facebook').logout();
+		checkLogin();
+	}
+</script>
